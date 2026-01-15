@@ -55,19 +55,19 @@ app.use((req,res,next)=>{
     next();
 });
 //demouser
-// app.get("/demouser",async(req,res)=>{
-//     let fakeuser=new User({
-//         email:"mayur@gmail.com",
-//         username:"mayur-meshram",
-//     });
-//     let registereduser=await User.register(fakeuser,"helloworld");
-//     res.send(registereduser);
-// });
-app.get("/demouser", async (req, res) => {
-    console.log("TYPE OF REGISTER:", typeof User.register);
-    console.log("PLUGIN:", typeof passportLocalMongoose);
-    res.send("Check console");
+app.get("/demouser",async(req,res)=>{
+    let fakeuser=new User({
+        email:"mayur@gmail.com",
+        username:"mayur-meshram",
+    });
+    let registereduser=await User.register(fakeuser,"helloworld");
+    res.send(registereduser);
 });
+// app.get("/demouser", async (req, res) => {
+//     console.log("TYPE OF REGISTER:", typeof User.register);
+//     console.log("PLUGIN:", typeof passportLocalMongoose);
+//     res.send("Check console");
+// });
 
 //post validation
 
