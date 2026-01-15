@@ -1,4 +1,4 @@
-<% layout("/layouts/boilerplate") %>
+<% layout("/layouts/boilerplate") %><%=success %>
 
 <div class="container">
   <h3 class="mb-4">All listings</h3>
@@ -11,7 +11,7 @@
           href="/listings/<%= listing._id %>"
           class="listing-link text-decoration-none text-dark"
         >
-          <div class="card h-100 shadow-sm">
+          <div class="card h-100 shadow-sm listing-card">
 
             <img
               src="<%= listing.image%>"

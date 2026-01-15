@@ -5,9 +5,15 @@ const Listing=require("./models/Listing.js");
 const path=require("path");
 const methodOverride=require("method-override");
 const ejsMate=require("ejs-mate");
-const wrapasync=require("./utils/wrapasync.js")
 const expresserror=require("./utils/expresserror.js");
-const {listingschema}=require("./schema.js");
+const Review=require("./models/review.js");
+const newlisting=require("./routes/listing.js");
+const reviews=require("./routes/review.js");
+const session=require("express-session");
+const flash=require("connect-flash");
+const passport=require("passport");
+const Localstrategy=require("passport-local");
+const User=require("./models/user.js");
 main().then(()=>{
     console.log("connected to DB");
 })
@@ -19,6 +25,17 @@ async function main() {
 }
 app.set("view engine","ejs");
 app.set("views",path.join(__dirname,"views"));
+  const sessionoptions=({
+        secret:"mysupersecretstring",
+        resave:false,
+        saveUninitialized:true,
+        cookie:{
+            expires:Date.now()+7*24*60*60*1000,
+            maxAge:7*24*60*60*1000,
+            httponly:true,
+        },
+    });
+app.use(session(sessionoptions));
 app.use(express.urlencoded({extended:true}));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname,("public"))))
@@ -26,61 +43,36 @@ app.engine('ejs', ejsMate);
 app.get("/",(req,res)=>{
     res.send("root is working")
 });
-const validateListing=(req,res,next)=>{
-      let {error}=listingschema.validate(req.body);
-    if(error){
-        let errmsg=error.details.map((el)=>el.message).join(",");
-        throw new expresserror(400,errmsg);
-    }else{
-        next();
-    }
-}
-//index route
-app.get("/listings",wrapasync(async (req,res)=>{
-    const alllistings=await Listing.find({});
-    res.render("listings/index.ejs",{alllistings});
-}));
-// new route
-app.get("/listings/new",(req,res)=>{
-    res.render("listings/new.ejs");
+app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new Localstrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+app.use((req,res,next)=>{
+   res.locals.success=req.flash("success");
+   res.locals.error=req.flash("error");
+    next();
 });
-//crate route
-app.post("/listings",validateListing, wrapasync(async (req,res,next)=>{
-    //  if(!req.body.listing){
-    //     throw new expresserror(400,"send valid data for listings");
-    //  }
-     let newlisting=new Listing(req.body.listing);
-     await newlisting.save();
-    res.redirect("/listings");
-   
-}));
-//show route
-app.get("/listings/:id",wrapasync(async (req,res)=>{
-    let {id}=req.params;
-    const listing=await Listing.findById(id);
-    res.render("listings/show.ejs",{listing});
-}));
-//edit route
-app.get("/listings/:id/edit",wrapasync(async (req,res)=>{
-    let {id}=req.params;
-    const listing=await Listing.findById(id);
-    res.render("listings/edit.ejs",{listing});
-}));
-//update route
-app.put("/listings/:id", validateListing,wrapasync(async (req,res)=>{
-    // if(!req.body.listing){
-    //     throw new expresserror(400,"send valid data for listings");
-    //  }
-     let {id}=req.params;
-     await Listing.findByIdAndUpdate(id, {...req.body.listing});
-     res.redirect(`/listings/${id}`);
-}));
-app.delete("/listings/:id",wrapasync(async (req,res)=>{
-     let {id}=req.params;
-     let deletelisting=await Listing.findByIdAndDelete(id);
-     console.log(deletelisting);
-     res.redirect("/listings");
-}));
+//demouser
+// app.get("/demouser",async(req,res)=>{
+//     let fakeuser=new User({
+//         email:"mayur@gmail.com",
+//         username:"mayur-meshram",
+//     });
+//     let registereduser=await User.register(fakeuser,"helloworld");
+//     res.send(registereduser);
+// });
+app.get("/demouser", async (req, res) => {
+    console.log("TYPE OF REGISTER:", typeof User.register);
+    console.log("PLUGIN:", typeof passportLocalMongoose);
+    res.send("Check console");
+});
+
+//post validation
+
+app.use("/listings",newlisting);
+app.use("/listings/:id/reviews",reviews);
 app.all(/.*/,(req,res,next)=>{
     next(new expresserror(404,"page not found"));
 })
