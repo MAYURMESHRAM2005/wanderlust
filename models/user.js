@@ -7,12 +7,9 @@ const UserSchema = new Schema({
         type: String,
         required: true,
         unique: true
-    },
+    }
 });
 
-// Correct plugin usage (function, not object)
 UserSchema.plugin(passportLocalMongoose);
 
-
-// Correct export (schema object, not string)
-module.exports = mongoose.model("user", UserSchema);
+module.exports = mongoose.model("User", UserSchema);
