@@ -1,19 +1,20 @@
 const express=require("express");
 const app=express();
 const mongoose=require("mongoose");
-const Listing=require("./models/Listing.js");
+// const Listing=require("./models/Listing.js");
 const path=require("path");
 const methodOverride=require("method-override");
 const ejsMate=require("ejs-mate");
 const expresserror=require("./utils/expresserror.js");
-const Review=require("./models/review.js");
-const newlisting=require("./routes/listing.js");
-const reviews=require("./routes/review.js");
+// const Review=require("./models/review.js");
 const session=require("express-session");
 const flash=require("connect-flash");
 const passport=require("passport");
 const Localstrategy=require("passport-local");
 const User=require("./models/user.js");
+const newlistingrouter=require("./routes/listing.js");
+const reviewsrouter=require("./routes/review.js");
+const userrouter=require("./routes/user.js");
 main().then(()=>{
     console.log("connected to DB");
 })
@@ -35,7 +36,6 @@ app.set("views",path.join(__dirname,"views"));
             httponly:true,
         },
     });
-app.use(session(sessionoptions));
 app.use(express.urlencoded({extended:true}));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname,("public"))))
@@ -43,27 +43,29 @@ app.engine('ejs', ejsMate);
 app.get("/",(req,res)=>{
     res.send("root is working")
 });
-app.use(flash());
+app.use(session(sessionoptions));
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new Localstrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+app.use(flash());
 app.use((req,res,next)=>{
    res.locals.success=req.flash("success");
    res.locals.error=req.flash("error");
     next();
 });
 //demouser
-app.get("/demouser",async(req,res)=>{
-    let fakeuser=new User({
-        email:"mayur@gmail.com",
-        username:"mayur-meshram",
-    });
-    let registereduser=await User.register(fakeuser,"helloworld");
-    res.send(registereduser);
-});
-// app.get("/demouser", async (req, res) => {
+// app.get("/demouser",async(req,res)=>{
+//     let fakeuser=new User({
+//         email:"mayur@gmail.com",
+//         username:"mayur-meshram",
+//     });
+//     let registereduser=await User.register(fakeuser,"helloworld");
+//     res.send(registereduser);
+// });
+
+// // app.get("/demouser", async (req, res) => {
 //     console.log("TYPE OF REGISTER:", typeof User.register);
 //     console.log("PLUGIN:", typeof passportLocalMongoose);
 //     res.send("Check console");
@@ -71,15 +73,22 @@ app.get("/demouser",async(req,res)=>{
 
 //post validation
 
-app.use("/listings",newlisting);
-app.use("/listings/:id/reviews",reviews);
+app.use("/listings",newlistingrouter);
+app.use("/listings/:id/reviews",reviewsrouter);
+app.use("/",userrouter)
 app.all(/.*/,(req,res,next)=>{
     next(new expresserror(404,"page not found"));
-})
+});
+// // 404 Handler
+// app.use((req, res, next) => {
+//     next(new expresserror(404, "Page not found"));
+// });
+
+
 app.use((err,req,res,next)=>{
     let {statuscode=500,message="something went wrong"}=err;
     // res.status(statuscode).send(message);
-     res.render("listings/error.ejs",{message});
+     res.status(statuscode).render("error.ejs",{message});
      
 });
 // app.get("/testlistings",async (req,res)=>{
