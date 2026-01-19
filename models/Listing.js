@@ -25,6 +25,10 @@ const ListingScheama=new Schema({
       ref:"review",
     },
   ],
+  owner:{
+    type:Schema.Types.ObjectId,
+    ref:"User",
+  }
 
 });
 ListingScheama.post("findOneAndDelete", async(listing)=>{

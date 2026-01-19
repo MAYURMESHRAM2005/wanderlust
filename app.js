@@ -15,6 +15,7 @@ const newlistingrouter = require("./routes/listing.js");
 const reviewsrouter = require("./routes/review.js");
 const userrouter = require("./routes/user.js");
 const expresserror = require("./utils/expresserror.js");
+mongoose.set('strictQuery', false);
 
 // DATABASE
 mongoose.connect("mongodb://127.0.0.1:27017/wanderlust")
@@ -55,6 +56,7 @@ passport.deserializeUser(User.deserializeUser());
 app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
+    res.locals.currUser=req.user;
     next();
 });
 
